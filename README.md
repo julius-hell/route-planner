@@ -1,21 +1,46 @@
-# Next.js template
+# Bike Tour Planner
 
-This is a Next.js template with shadcn/ui.
+This app lets you register with email/password, plan bike routes by clicking waypoints on a map, and save tours to Postgres.
 
-## Adding components
+## Stack
 
-To add components to your app, run the following command:
+- Next.js 16 App Router
+- Postgres + Drizzle ORM
+- NextAuth credentials authentication (session cookies)
+- MapLibre map rendering
+- OpenRouteService route generation (`cycling-regular`)
+
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in values:
 
 ```bash
-npx shadcn@latest add button
+cp .env.example .env.local
 ```
 
-This will place the ui components in the `components` directory.
+Required variables:
 
-## Using components
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `NEXTAUTH_URL`
+- `ORS_API_KEY`
 
-To use the components in your app, import them as follows:
+## Local Setup
 
-```tsx
-import { Button } from "@/components/ui/button";
+```bash
+pnpm install
+pnpm db:generate
+pnpm db:migrate
+pnpm dev
 ```
+
+Open `http://localhost:3000`.
+
+## Features
+
+- Email/password registration and login
+- Protected planner page (`/planner`)
+- Waypoint map interaction with max 25 points
+- Route modes: open and round-trip (auto-close)
+- Route display with distance and estimated duration
+- Save, load, and delete tours
