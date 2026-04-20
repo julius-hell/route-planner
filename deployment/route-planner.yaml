@@ -18,7 +18,7 @@ spec:
       containers:
         - name: route-planner
           image: jhell/route-planner:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
               name: http

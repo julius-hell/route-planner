@@ -44,3 +44,7 @@ Open `http://localhost:3000`.
 - Route modes: open and round-trip (auto-close)
 - Route display with distance and estimated duration
 - Save, load, and delete tours
+
+## Kubernetes Deployment Note
+
+- `deployment/route-planner.yaml` uses `imagePullPolicy: Always` for `jhell/route-planner:latest`, so each pod start pulls the latest pushed image.
