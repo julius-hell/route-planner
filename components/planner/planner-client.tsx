@@ -43,6 +43,7 @@ type SearchResult = {
 }
 
 type MapView = "map" | "satellite"
+type RoundTripTargetType = "distance" | "duration"
 
 const satelliteMapStyle: StyleSpecification = {
   version: 8,
@@ -237,6 +238,9 @@ export function PlannerClient({ initialTours }: PlannerClientProps) {
   const [route, setRoute] = useState<GeneratedRoute | null>(null)
   const [showElevationOverlay, setShowElevationOverlay] = useState(false)
   const [mapView, setMapView] = useState<MapView>("map")
+  const [roundTripTargetType, setRoundTripTargetType] =
+    useState<RoundTripTargetType>("distance")
+  const [roundTripTargetValue, setRoundTripTargetValue] = useState("40")
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -244,6 +248,17 @@ export function PlannerClient({ initialTours }: PlannerClientProps) {
   const [isSearching, setIsSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mapLanguage, setMapLanguage] = useState("en")
+
+  const parsedRoundTripTargetValue = Number(roundTripTargetValue)
+  const hasValidRoundTripTarget =
+    Number.isFinite(parsedRoundTripTargetValue) &&
+    parsedRoundTripTargetValue > 0
+
+  const canGenerateRoute =
+    routeMode === "open"
+      ? waypoints.length >= 2
+      : waypoints.length >= 2 ||
+        (waypoints.length === 1 && hasValidRoundTripTarget)
 
   const mapStyle =
     mapView === "satellite"
@@ -375,8 +390,31 @@ export function PlannerClient({ initialTours }: PlannerClientProps) {
   }, [route])
 
   async function generateRoute() {
-    if (waypoints.length < 2) {
-      setError("Add at least two points to generate a route")
+    if (routeMode === "open") {
+      if (waypoints.length < 2) {
+        setError("Add at least two points to generate a route")
+        return
+      }
+    } else if (waypoints.length < 1) {
+      setError("Add at least one start point for a round trip")
+      return
+    }
+
+    const shouldUseAutoRoundTrip =
+      routeMode === "round_trip" &&
+      waypoints.length === 1 &&
+      hasValidRoundTripTarget
+
+    if (
+      routeMode === "round_trip" &&
+      waypoints.length === 1 &&
+      !shouldUseAutoRoundTrip
+    ) {
+      setError(
+        roundTripTargetType === "distance"
+          ? "Set a valid target distance in km for auto round-trip"
+          : "Set a valid target duration in minutes for auto round-trip"
+      )
       return
     }
 
@@ -395,6 +433,15 @@ export function PlannerClient({ initialTours }: PlannerClientProps) {
             lat: point.lat,
             lng: point.lng,
           })),
+          roundTripTarget: shouldUseAutoRoundTrip
+            ? {
+                type: roundTripTargetType,
+                value:
+                  roundTripTargetType === "distance"
+                    ? parsedRoundTripTargetValue * 1000
+                    : parsedRoundTripTargetValue * 60,
+              }
+            : undefined,
         }),
       })
 
@@ -686,6 +733,51 @@ export function PlannerClient({ initialTours }: PlannerClientProps) {
               ? "Round trip auto-closes back to the first point"
               : "Open routes end at the last selected point"}
           </p>
+          {routeMode === "round_trip" ? (
+            <div className="grid gap-2 rounded-md border border-border p-2">
+              <p className="text-xs text-muted-foreground">
+                Add one start point and set a target for auto round-trip
+                generation.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    roundTripTargetType === "distance" ? "default" : "outline"
+                  }
+                  onClick={() => setRoundTripTargetType("distance")}
+                >
+                  Distance
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    roundTripTargetType === "duration" ? "default" : "outline"
+                  }
+                  onClick={() => setRoundTripTargetType("duration")}
+                >
+                  Duration
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={roundTripTargetValue}
+                  onChange={(event) =>
+                    setRoundTripTargetValue(event.target.value)
+                  }
+                  className="h-9 w-24 rounded-md border border-border bg-background px-2 text-sm"
+                />
+                <span className="text-xs text-muted-foreground">
+                  {roundTripTargetType === "distance" ? "km" : "min"}
+                </span>
+              </div>
+            </div>
+          ) : null}
           {showElevationOverlay ? (
             <p className="text-xs text-muted-foreground">
               Map colors: green uphill, red downhill, amber mostly flat.
@@ -750,7 +842,7 @@ export function PlannerClient({ initialTours }: PlannerClientProps) {
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={generateRoute}
-            disabled={isGenerating || waypoints.length < 2}
+            disabled={isGenerating || !canGenerateRoute}
           >
             {isGenerating ? "Generating..." : "Generate Route"}
           </Button>

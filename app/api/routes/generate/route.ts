@@ -54,6 +54,37 @@ function calculateElevationFromCoordinates(
   }
 }
 
+function getRoundTripOptions(roundTripTarget: {
+  type: "distance" | "duration"
+  value: number
+}) {
+  if (roundTripTarget.type === "distance") {
+    return {
+      options: {
+        round_trip: {
+          length: Math.round(roundTripTarget.value),
+          points: 3,
+          seed: 11,
+        },
+      },
+    }
+  }
+
+  const averageCyclingSpeedMetersPerSecond = 5.5
+
+  return {
+    options: {
+      round_trip: {
+        length: Math.round(
+          roundTripTarget.value * averageCyclingSpeedMetersPerSecond
+        ),
+        points: 3,
+        seed: 11,
+      },
+    },
+  }
+}
+
 export async function POST(request: Request) {
   const session = await getServerAuthSession()
 
@@ -85,6 +116,9 @@ export async function POST(request: Request) {
   const orsPayload = {
     coordinates: routeCoordinates.map((point) => [point.lng, point.lat]),
     elevation: true,
+    ...(parsed.data.routeMode === "round_trip" && parsed.data.roundTripTarget
+      ? getRoundTripOptions(parsed.data.roundTripTarget)
+      : {}),
   }
 
   const orsResponse = await fetch(
