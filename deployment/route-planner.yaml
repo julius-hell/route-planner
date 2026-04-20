@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: route-planner
+  namespace: route-planner
+  labels:
+    app: route-planner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: route-planner
+  template:
+    metadata:
+      labels:
+        app: route-planner
+    spec:
+      containers:
+        - name: route-planner
+          image: jhell/route-planner:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-cluster-app
+                  key: uri
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: route-planner
+                  key: AUTH_SECRET
+            - name: NEXTAUTH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: route-planner
+                  key: NEXTAUTH_URL
+            - name: ORS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: route-planner
+                  key: ORS_API_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: route-planner
+  namespace: route-planner
+  labels:
+    app: route-planner
+spec:
+  selector:
+    app: route-planner
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
