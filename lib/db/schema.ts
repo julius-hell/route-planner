@@ -124,6 +124,8 @@ export const tourRoutes = pgTable(
     provider: varchar("provider", { length: 64 }).notNull(),
     distanceM: doublePrecision("distance_m").notNull(),
     durationS: doublePrecision("duration_s").notNull(),
+    ascentM: doublePrecision("ascent_m").notNull(),
+    descentM: doublePrecision("descent_m").notNull(),
     geometry: jsonb("geometry").notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },

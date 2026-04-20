@@ -9,15 +9,49 @@ type OrsResponse = {
   features?: Array<{
     geometry?: {
       type: "LineString"
-      coordinates: [number, number][]
+      coordinates: ([number, number] | [number, number, number])[]
     }
     properties?: {
       summary?: {
         distance?: number
         duration?: number
+        ascent?: number
+        descent?: number
       }
     }
   }>
+}
+
+function calculateElevationFromCoordinates(
+  coordinates: ([number, number] | [number, number, number])[]
+) {
+  let ascentM = 0
+  let descentM = 0
+
+  for (let index = 1; index < coordinates.length; index += 1) {
+    const previousElevation = coordinates[index - 1]?.[2]
+    const currentElevation = coordinates[index]?.[2]
+
+    if (
+      typeof previousElevation !== "number" ||
+      typeof currentElevation !== "number"
+    ) {
+      continue
+    }
+
+    const delta = currentElevation - previousElevation
+
+    if (delta > 0) {
+      ascentM += delta
+    } else if (delta < 0) {
+      descentM += Math.abs(delta)
+    }
+  }
+
+  return {
+    ascentM,
+    descentM,
+  }
 }
 
 export async function POST(request: Request) {
@@ -50,6 +84,7 @@ export async function POST(request: Request) {
 
   const orsPayload = {
     coordinates: routeCoordinates.map((point) => [point.lng, point.lat]),
+    elevation: true,
   }
 
   const orsResponse = await fetch(
@@ -81,6 +116,8 @@ export async function POST(request: Request) {
   const geometry = feature?.geometry
   const distance = feature?.properties?.summary?.distance
   const duration = feature?.properties?.summary?.duration
+  const ascent = feature?.properties?.summary?.ascent
+  const descent = feature?.properties?.summary?.descent
 
   if (
     !geometry ||
@@ -96,11 +133,18 @@ export async function POST(request: Request) {
     )
   }
 
+  const fallbackElevation = calculateElevationFromCoordinates(
+    geometry.coordinates
+  )
+
   return NextResponse.json({
     route: {
       provider: "openrouteservice",
       distanceM: distance,
       durationS: duration,
+      ascentM: typeof ascent === "number" ? ascent : fallbackElevation.ascentM,
+      descentM:
+        typeof descent === "number" ? descent : fallbackElevation.descentM,
       geometry,
     },
   })

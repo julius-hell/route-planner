@@ -23,6 +23,8 @@ function toGeneratedRoute(route: RouteRow): GeneratedRoute | null {
     provider: "openrouteservice",
     distanceM: route.distanceM,
     durationS: route.durationS,
+    ascentM: route.ascentM,
+    descentM: route.descentM,
     geometry: route.geometry as GeneratedRoute["geometry"],
   }
 }

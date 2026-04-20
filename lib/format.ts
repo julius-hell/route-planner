@@ -13,3 +13,7 @@ export function formatDuration(durationS: number) {
 
   return `${hours}h ${minutes.toString().padStart(2, "0")}m`
 }
+
+export function formatElevation(elevationM: number) {
+  return `${Math.round(elevationM)} m`
+}

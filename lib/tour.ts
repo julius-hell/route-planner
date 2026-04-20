@@ -8,13 +8,15 @@ export type Waypoint = {
 
 export type RouteGeometry = {
   type: "LineString"
-  coordinates: [number, number][]
+  coordinates: ([number, number] | [number, number, number])[]
 }
 
 export type GeneratedRoute = {
   provider: "openrouteservice"
   distanceM: number
   durationS: number
+  ascentM: number
+  descentM: number
   geometry: RouteGeometry
 }
 

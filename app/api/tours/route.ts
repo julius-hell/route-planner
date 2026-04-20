@@ -75,6 +75,8 @@ export async function POST(request: Request) {
     provider: parsed.data.route.provider,
     distanceM: parsed.data.route.distanceM,
     durationS: parsed.data.route.durationS,
+    ascentM: parsed.data.route.ascentM,
+    descentM: parsed.data.route.descentM,
     geometry: parsed.data.route.geometry,
   })
 

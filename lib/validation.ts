@@ -32,9 +32,18 @@ export const createTourSchema = z.object({
     provider: z.literal("openrouteservice"),
     distanceM: z.number().positive(),
     durationS: z.number().positive(),
+    ascentM: z.number().nonnegative(),
+    descentM: z.number().nonnegative(),
     geometry: z.object({
       type: z.literal("LineString"),
-      coordinates: z.array(z.tuple([z.number(), z.number()])).min(2),
+      coordinates: z
+        .array(
+          z.union([
+            z.tuple([z.number(), z.number()]),
+            z.tuple([z.number(), z.number(), z.number()]),
+          ])
+        )
+        .min(2),
     }),
   }),
 })
